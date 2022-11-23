@@ -42,7 +42,10 @@ jobs:
         path: output
     - name: check
       run: |
-        ls output/**
+        ls -la output
+        for ar in `ls output/**.tar.gz`; do
+          tar xvzf $ar
+        done
         # JSON=$(cat << EOS
         # {
         #   "schemaVersion": "1.0",
