@@ -43,7 +43,7 @@ jobs:
     - name: check
       run: |
         ls -la output
-        for ar in `ls output/**.tar.gz`; do
+        for ar in `ls output/**/*.tar.gz`; do
           tar xvzf $ar
         done
         # JSON=$(cat << EOS
