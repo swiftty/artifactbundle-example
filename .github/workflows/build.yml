@@ -25,7 +25,7 @@ jobs:
         swift-version: "5.7"
     - name: check
       run: |
-        tar cvzf output.tar.gz ${{ steps.builder.outputs.path }}
+        tar -cvzf output.tar.gz ${{ steps.builder.outputs.path }}
     - uses: actions/upload-artifact@v3
       with:
         name: artifact-${{ runner.os }}.tar.gz
@@ -42,16 +42,37 @@ jobs:
         path: output
     - name: check
       run: |
-        ls -la output
-        for ar in `ls output/**/*.tar.gz`; do
-          tar xvzf $ar
+        for ar in `ls output/*.tar.gz`; do
+          tar -xvzf $ar
+          rm -r $(dirname $ar)
         done
-        # JSON=$(cat << EOS
-        # {
-        #   "schemaVersion": "1.0",
-        #   "artifacts": {
 
-        #   }
-        # }
-        # EOS
-        # )
+        cat << EOS > info.json
+{
+    "schemaVersion": "1.0",
+    "artifacts": {}
+}
+EOS
+
+        ARTIFACTBUNDLE=$(basename $PWD).artifactbundle
+        mkdir -p $ARTIFACTBUNDLE
+
+        for triple in `ls output`; do
+          for json in `ls output/$triple/*.json`; do
+            ID=$(basename $json .json)
+            if cat info.json | jq --exit-status '.artifacts."'$ID'"' ; then
+              echo "$ID exists"
+            else
+              JSON=$(cat info.json | jq '.artifacts |= { "'$ID'": { "type": "executable", "version": "0.0.1", "variants": [] } }')
+              echo $JSON > info.json
+            fi
+
+            JSON=$(cat info.json | jq --argjson var $(cat $json | jq -c .) '.artifacts."'$ID'".variants += [$var]')
+            echo $JSON | jq . > info.json
+          done
+
+          mkdir -p $ARTIFACTBUNDLE/$triple
+          mv output/$triple/bin $ARTIFACTBUNDLE/$triple
+        done
+
+        mv info.json $ARTIFACTBUNDLE
