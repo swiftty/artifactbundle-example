@@ -32,13 +32,14 @@ jobs:
     - uses: actions/download-artifact@v3
       with:
         path: output
-    - name: check
+    - name: Unarchive
       run: |
         for ar in `ls output/artifact-*/*.tar.gz`; do
           tar -xvzf $ar
           rm -r $(dirname $ar)
         done
-
+    - name: check
+      run: |
         for version in `ls output`; do
           ARTIFACTBUNDLE=$(basename $PWD).artifactbundle
           ARTIFACTBUNDLE_PATH=dist/$version/$ARTIFACTBUNDLE
@@ -69,7 +70,7 @@ jobs:
             done
 
             mkdir -p $ARTIFACTBUNDLE_PATH/$triple
-            mv output/$triple/bin $ARTIFACTBUNDLE_PATH/$triple
+            mv output/$version/$triple/bin $ARTIFACTBUNDLE_PATH/$triple
           done
 
           zip -r $ARTIFACTBUNDLE.zip $ARTIFACTBUNDLE_PATH
