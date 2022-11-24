@@ -62,7 +62,7 @@ jobs:
         for triple in `ls output`; do
           for json in `ls output/$triple/*.json`; do
             ID=$(basename $json .json)
-            if cat info.json | jq --exit-status '.artifacts."'$ID'"' ; then
+            if cat info.json | jq --exit-status '.artifacts."'$ID'"' 1> /dev/null ; then
               echo "$ID exists"
             else
               JSON=$(cat info.json | jq '.artifacts |= { "'$ID'": { "type": "executable", "version": "0.0.1", "variants": [] } }')
@@ -78,3 +78,11 @@ jobs:
         done
 
         mv info.json $ARTIFACTBUNDLE
+
+        zip -r $ARTIFACTBUNDLE.zip $ARTIFACTBUNDLE
+        echo 
+    - uses: actions/upload-artifact@v3
+      with:
+        name: artifactbundle.zip
+        path: *.artifactbundle.zip
+        retention-days: 1
