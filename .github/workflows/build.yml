@@ -42,10 +42,12 @@ jobs:
         path: output
     - name: check
       run: |
-        for ar in `ls output/*.tar.gz`; do
+        for ar in `ls output/**/*.tar.gz`; do
           tar -xvzf $ar
           rm -r $(dirname $ar)
         done
+
+        ls -la output/
 
         cat << EOS > info.json
         {
