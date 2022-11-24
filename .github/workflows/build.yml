@@ -34,51 +34,49 @@ jobs:
         path: output
     - name: check
       run: |
-        ls -la output
-        echo "-------"
-        ls -la output/**
-
         for ar in `ls output/artifact-*/*.tar.gz`; do
           tar -xvzf $ar
           rm -r $(dirname $ar)
         done
 
-        ls -la output/
+        for version in `ls output`; do
+          ARTIFACTBUNDLE=$(basename $PWD).artifactbundle
+          ARTIFACTBUNDLE_PATH=dist/$version/$ARTIFACTBUNDLE
 
-        cat << EOS > info.json
+          INFO_PATH=$ARTIFACTBUNDLE_PATH/info.json
+
+          mkdir -p $ARTIFACTBUNDLE_PATH
+
+          cat << EOS > $INFO_PATH
         {
             "schemaVersion": "1.0",
             "artifacts": {}
         }
         EOS
 
-        ARTIFACTBUNDLE=$(basename $PWD).artifactbundle
-        mkdir -p $ARTIFACTBUNDLE
+          for triple in `ls output/$version`; do
+            for json in `ls output/$version/$triple/*.json`; do
+              ID=$(basename $json .json)
+              if cat $INFO_PATH | jq --exit-status '.artifacts."'$ID'"' 1> /dev/null ; then
+                echo "$ID exists"
+              else
+                JSON=$(cat $INFO_PATH | jq '.artifacts |= { "'$ID'": { "type": "executable", "version": "0.0.1", "variants": [] } }')
+                echo $JSON > $INFO_PATH
+              fi
 
-        for triple in `ls output`; do
-          for json in `ls output/$triple/*.json`; do
-            ID=$(basename $json .json)
-            if cat info.json | jq --exit-status '.artifacts."'$ID'"' 1> /dev/null ; then
-              echo "$ID exists"
-            else
-              JSON=$(cat info.json | jq '.artifacts |= { "'$ID'": { "type": "executable", "version": "0.0.1", "variants": [] } }')
-              echo $JSON > info.json
-            fi
+              JSON=$(cat $INFO_PATH | jq --argjson var $(cat $json | jq -c .) '.artifacts."'$ID'".variants += [$var]')
+              echo $JSON | jq . > $INFO_PATH
+            done
 
-            JSON=$(cat info.json | jq --argjson var $(cat $json | jq -c .) '.artifacts."'$ID'".variants += [$var]')
-            echo $JSON | jq . > info.json
+            mkdir -p $ARTIFACTBUNDLE_PATH/$triple
+            mv output/$triple/bin $ARTIFACTBUNDLE_PATH/$triple
           done
 
-          mkdir -p $ARTIFACTBUNDLE/$triple
-          mv output/$triple/bin $ARTIFACTBUNDLE/$triple
+          zip -r $ARTIFACTBUNDLE.zip $ARTIFACTBUNDLE_PATH
+          mv $ARTIFACTBUNDLE.zip $dist/$version/
         done
-
-        mv info.json $ARTIFACTBUNDLE
-
-        zip -r $ARTIFACTBUNDLE.zip $ARTIFACTBUNDLE
-        echo 
     - uses: actions/upload-artifact@v3
       with:
         name: artifactbundle.zip
-        path: '*.artifactbundle.zip'
+        path: 'dist/**/*.artifactbundle.zip'
         retention-days: 1
