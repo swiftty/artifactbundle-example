@@ -23,14 +23,6 @@ jobs:
       id: builder
       with:
         swift-version: "5.7"
-    - name: check
-      run: |
-        tar -cvzf output.tar.gz ${{ steps.builder.outputs.path }}
-    - uses: actions/upload-artifact@v3
-      with:
-        name: artifact-${{ runner.os }}.tar.gz
-        path: output.tar.gz
-        retention-days: 1
 
   bundle:
     runs-on: ubuntu-latest
@@ -42,7 +34,11 @@ jobs:
         path: output
     - name: check
       run: |
-        for ar in `ls output/**/*.tar.gz`; do
+        ls -la output
+        echo "-------"
+        ls -la output/**
+
+        for ar in `ls output/artifact-*/*.tar.gz`; do
           tar -xvzf $ar
           rm -r $(dirname $ar)
         done
