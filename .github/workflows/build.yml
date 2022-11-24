@@ -75,11 +75,12 @@ jobs:
             mv output/$version/$triple/bin $ARTIFACTBUNDLE_PATH/$triple
           done
 
-          zip -r $ARTIFACTBUNDLE.zip $ARTIFACTBUNDLE_PATH
-          mv $ARTIFACTBUNDLE.zip dist/$version/
+          pushd $ARTIFACTBUNDLE_PATH/../
+          zip -r $ARTIFACTBUNDLE.zip $ARTIFACTBUNDLE
+          popd
         done
     - uses: actions/upload-artifact@v3
       with:
-        name: artifactbundle.zip
+        name: artifactbundle
         path: 'dist/**/*.artifactbundle.zip'
         retention-days: 1
