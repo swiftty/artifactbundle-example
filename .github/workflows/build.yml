@@ -40,8 +40,9 @@ jobs:
         done
     - name: check
       run: |
+        ARTIFACTBUNDLE=$(basename $PWD).artifactbundle
+
         for version in `ls output`; do
-          ARTIFACTBUNDLE=$(basename $PWD).artifactbundle
           ARTIFACTBUNDLE_PATH=dist/$version/$ARTIFACTBUNDLE
 
           INFO_PATH=$ARTIFACTBUNDLE_PATH/info.json
@@ -74,7 +75,7 @@ jobs:
           done
 
           zip -r $ARTIFACTBUNDLE.zip $ARTIFACTBUNDLE_PATH
-          mv $ARTIFACTBUNDLE.zip $dist/$version/
+          mv $ARTIFACTBUNDLE.zip dist/$version/
         done
     - uses: actions/upload-artifact@v3
       with:
