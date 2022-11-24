@@ -48,11 +48,11 @@ jobs:
         done
 
         cat << EOS > info.json
-{
-    "schemaVersion": "1.0",
-    "artifacts": {}
-}
-EOS
+        {
+            "schemaVersion": "1.0",
+            "artifacts": {}
+        }
+        EOS
 
         ARTIFACTBUNDLE=$(basename $PWD).artifactbundle
         mkdir -p $ARTIFACTBUNDLE
